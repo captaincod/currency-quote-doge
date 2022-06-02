@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Котировки Dogecoin</string>
+    <string name="api_key">b42456b179be9f244da5ef0096e1829285f021135fb79bd5e44822020023cbfe</string>
+    <string name="for_text_view">Стоимость в %s: </string>
+</resources>
