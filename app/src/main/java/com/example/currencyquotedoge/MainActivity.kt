@@ -6,6 +6,8 @@ import android.util.Log
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.google.gson.Gson
+import okhttp3.*
+import java.io.IOException
 
 
 class MainActivity : AppCompatActivity() {
@@ -21,14 +23,25 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        intent = Intent(this, QuotesService::class.java)
+        val URL =
+            "https://min-api.cryptocompare.com/data/price?fsym=DOGE&tsyms=USD,EUR,RUB&api_key=${R.string.api_key}"
+        var firstJson = ""
+        val request: Request = Request.Builder().url(URL).build()
+        OkHttpClient().newCall(request).enqueue(object: Callback {
+            override fun onFailure(call: Call?, e: IOException?) {
+                Log.d("mytag", "Failed call: $e")
+            }
+
+            override fun onResponse(call: Call?, response: Response?) {
+                firstJson = response?.body()?.string().toString()
+                timeUpdate(firstJson)
+            }
+        })
+
+        intent = Intent(this, QuotesIntentService::class.java)
         startService(intent)
 
-        timeReceiver = object : BroadcastReceiver() {
-            override fun onReceive(context: Context?, intent: Intent?) {
-                (context as MainActivity).timeUpdate()
-            }
-        }
+        timeReceiver = TimeReceiver()
         registerReceiver(timeReceiver, IntentFilter("android.intent.action.TIME_TICK"))
 
 
@@ -40,8 +53,8 @@ class MainActivity : AppCompatActivity() {
 
     }
 
-    fun timeUpdate() {
-        val json = intent.getStringExtra("json")
+
+    fun timeUpdate(json: String?) {
         Log.d("mytag", "from main: $json")
         val quotes: Quotes = Gson().fromJson(json, Quotes::class.java)
         var text = getString(R.string.for_text_view, "USD") + " " + quotes.USD.toString()
